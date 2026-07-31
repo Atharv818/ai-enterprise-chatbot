@@ -1,0 +1,14 @@
+.env
+__pycache__/
+*.pyc
+venv/
+.venv/
+storage/uploads/*
+storage/processed/*
+storage/exports/*
+!storage/uploads/.gitkeep
+!storage/processed/.gitkeep
+!storage/exports/.gitkeep
+node_modules/
+.pytest_cache/
+*.egg-info/
