@@ -12,12 +12,22 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = "chatbot"
     POSTGRES_USER: str = "chatbot_app"
     POSTGRES_PASSWORD: str = "changeme"
+    READONLY_POSTGRES_USER: str
+    READONLY_POSTGRES_PASSWORD: str
 
     @property
     def DATABASE_URL(self) -> str:
         return (
             f"postgresql+psycopg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        )
+    
+    @property
+    def READONLY_DATABASE_URL(self) -> str:
+        return (
+            f"postgresql+psycopg://{self.READONLY_POSTGRES_USER}:"
+            f"{self.READONLY_POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:"
+            f"{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
     
     UPLOAD_DIR: str = "storage/uploads"
