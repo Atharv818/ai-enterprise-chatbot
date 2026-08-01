@@ -14,7 +14,8 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str = "changeme"
     READONLY_POSTGRES_USER: str
     READONLY_POSTGRES_PASSWORD: str
-
+    GROQ_API_KEY: str
+    
     @property
     def DATABASE_URL(self) -> str:
         return (

@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from app.api.routes import documents
 from app.core.config import settings
 from app.core.logging_config import configure_logging, get_logger
+from app.api.routes import documents, query
 
 configure_logging()
 logger = get_logger(__name__)
@@ -18,6 +19,7 @@ def on_startup():
 
 
 app.include_router(documents.router)
+app.include_router(query.router)
 
 
 @app.get("/health")
