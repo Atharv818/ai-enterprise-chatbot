@@ -1,6 +1,7 @@
 import shutil
 import uuid
 from pathlib import Path
+from app.services.ingestion import process_structured_file
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy.orm import Session
@@ -53,6 +54,16 @@ def upload_document(file: UploadFile, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(document)
 
+    db.add(document)
+    db.commit()
+    db.refresh(document)
+
     logger.info(f"document_uploaded id={document.id} filename={document.filename}")
+
+    if document.file_type in (DocumentType.XLSX, DocumentType.CSV):
+        document.status = DocumentStatus.PROCESSING
+        db.commit()
+        process_structured_file(document, db)
+        db.refresh(document)
 
     return document
