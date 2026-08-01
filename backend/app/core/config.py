@@ -19,6 +19,9 @@ class Settings(BaseSettings):
             f"postgresql+psycopg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
+    
+    UPLOAD_DIR: str = "storage/uploads"
+    MAX_UPLOAD_SIZE_MB: int = 50
 
 
 settings = Settings()
