@@ -7,5 +7,18 @@ class Settings(BaseSettings):
     APP_NAME: str = "AI Enterprise Chatbot"
     APP_VERSION: str = "0.1.0"
 
+    POSTGRES_HOST: str = "postgres"
+    POSTGRES_PORT: int = 5432
+    POSTGRES_DB: str = "chatbot"
+    POSTGRES_USER: str = "chatbot_app"
+    POSTGRES_PASSWORD: str = "changeme"
+
+    @property
+    def DATABASE_URL(self) -> str:
+        return (
+            f"postgresql+psycopg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+            f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        )
+
 
 settings = Settings()
