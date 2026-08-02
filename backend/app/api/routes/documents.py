@@ -11,6 +11,7 @@ from app.core.logging_config import get_logger
 from app.db.session import get_db
 from app.models.document import Document, DocumentStatus, DocumentType
 from app.schemas.document import DocumentResponse
+from app.services.text_extraction import extract_text
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 logger = get_logger(__name__)
@@ -64,6 +65,19 @@ def upload_document(file: UploadFile, db: Session = Depends(get_db)):
         document.status = DocumentStatus.PROCESSING
         db.commit()
         process_structured_file(document, db)
+        db.refresh(document)
+    elif document.file_type in (DocumentType.PDF, DocumentType.DOCX, DocumentType.TXT):
+        document.status = DocumentStatus.PROCESSING
+        db.commit()
+        try:
+            text = extract_text(document.storage_path, document.file_type.value)
+            logger.info(f"text_extracted id={document.id} chars={len(text)}")
+            document.status = DocumentStatus.READY
+        except Exception as e:  # noqa: BLE001
+            document.status = DocumentStatus.FAILED
+            document.error_message = str(e)
+            logger.error(f"text_extraction_failed id={document.id} error={e}")
+        db.commit()
         db.refresh(document)
 
     return document
