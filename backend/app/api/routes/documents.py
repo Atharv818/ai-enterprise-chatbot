@@ -16,6 +16,7 @@ from app.services.chunking import chunk_text
 from app.services.embedding import embed_chunks
 from app.services.vector_store import store_chunks
 
+
 router = APIRouter(prefix="/documents", tags=["documents"])
 logger = get_logger(__name__)
 
@@ -87,3 +88,4 @@ def upload_document(file: UploadFile, db: Session = Depends(get_db)):
         db.refresh(document)
 
     return document
+

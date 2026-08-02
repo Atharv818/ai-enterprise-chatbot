@@ -18,4 +18,8 @@ class SearchResponse(BaseModel):
     question: str
     results: list[SearchResult]
 
-    
+class AskDocumentsResponse(BaseModel):
+    question: str
+    answer: str
+    sources: list[SearchResult]
+        

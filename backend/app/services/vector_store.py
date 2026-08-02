@@ -46,6 +46,10 @@ def search_chunks(query_embedding: list[float], top_k: int = 5, document_id: str
     Searches Qdrant for the most semantically similar chunks to the query embedding.
     Optionally restricts the search to a single document.
     """
+    existing = [c.name for c in qdrant.get_collections().collections]
+    if COLLECTION_NAME not in existing:
+        return []
+
     query_filter = None
     if document_id:
         from qdrant_client.models import Filter, FieldCondition, MatchValue
@@ -70,3 +74,4 @@ def search_chunks(query_embedding: list[float], top_k: int = 5, document_id: str
         }
         for point in results.points
     ]
+
