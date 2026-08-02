@@ -12,6 +12,9 @@ from app.db.session import get_db
 from app.models.document import Document, DocumentStatus, DocumentType
 from app.schemas.document import DocumentResponse
 from app.services.text_extraction import extract_text
+from app.services.chunking import chunk_text
+from app.services.embedding import embed_chunks
+from app.services.vector_store import store_chunks
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 logger = get_logger(__name__)
@@ -71,12 +74,15 @@ def upload_document(file: UploadFile, db: Session = Depends(get_db)):
         db.commit()
         try:
             text = extract_text(document.storage_path, document.file_type.value)
-            logger.info(f"text_extracted id={document.id} chars={len(text)}")
+            chunks = chunk_text(text)
+            embeddings = embed_chunks(chunks)
+            stored_count = store_chunks(document.id, chunks, embeddings)
+            logger.info(f"document_indexed id={document.id} chunks={stored_count}")
             document.status = DocumentStatus.READY
         except Exception as e:  # noqa: BLE001
             document.status = DocumentStatus.FAILED
             document.error_message = str(e)
-            logger.error(f"text_extraction_failed id={document.id} error={e}")
+            logger.error(f"document_indexing_failed id={document.id} error={e}")
         db.commit()
         db.refresh(document)
 
