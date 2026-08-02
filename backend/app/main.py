@@ -4,6 +4,7 @@ from app.core.config import settings
 from app.core.logging_config import configure_logging, get_logger
 from app.api.routes import documents, query
 from app.db.qdrant_client import qdrant
+from app.api.routes import documents, query, search
 
 configure_logging()
 logger = get_logger(__name__)
@@ -21,6 +22,7 @@ def on_startup():
 
 app.include_router(documents.router)
 app.include_router(query.router)
+app.include_router(search.router)
 
 
 @app.get("/health")

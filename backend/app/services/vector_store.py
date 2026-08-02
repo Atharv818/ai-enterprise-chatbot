@@ -39,3 +39,34 @@ def store_chunks(document_id: str, chunks: list[str], embeddings: list[list[floa
 
     qdrant.upsert(collection_name=COLLECTION_NAME, points=points)
     return len(points)
+
+
+def search_chunks(query_embedding: list[float], top_k: int = 5, document_id: str | None = None):
+    """
+    Searches Qdrant for the most semantically similar chunks to the query embedding.
+    Optionally restricts the search to a single document.
+    """
+    query_filter = None
+    if document_id:
+        from qdrant_client.models import Filter, FieldCondition, MatchValue
+        query_filter = Filter(
+            must=[FieldCondition(key="document_id", match=MatchValue(value=document_id))]
+        )
+
+    results = qdrant.query_points(
+        collection_name=COLLECTION_NAME,
+        query=query_embedding,
+        limit=top_k,
+        query_filter=query_filter,
+        with_payload=True,
+    )
+
+    return [
+        {
+            "text": point.payload["text"],
+            "document_id": point.payload["document_id"],
+            "chunk_index": point.payload["chunk_index"],
+            "score": point.score,
+        }
+        for point in results.points
+    ]
