@@ -3,6 +3,7 @@ from app.api.routes import documents
 from app.core.config import settings
 from app.core.logging_config import configure_logging, get_logger
 from app.api.routes import documents, query
+from app.db.qdrant_client import qdrant
 
 configure_logging()
 logger = get_logger(__name__)
@@ -25,3 +26,9 @@ app.include_router(query.router)
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+@app.get("/health/qdrant")
+def qdrant_health():
+    collections = qdrant.get_collections()
+    return {"status": "ok", "collections": [c.name for c in collections.collections]}
+

@@ -6,6 +6,7 @@ class Settings(BaseSettings):
 
     APP_NAME: str = "AI Enterprise Chatbot"
     APP_VERSION: str = "0.1.0"
+    
 
     POSTGRES_HOST: str = "postgres"
     POSTGRES_PORT: int = 5432
@@ -15,7 +16,9 @@ class Settings(BaseSettings):
     READONLY_POSTGRES_USER: str
     READONLY_POSTGRES_PASSWORD: str
     GROQ_API_KEY: str
-    
+    QDRANT_HOST: str = "qdrant"
+    QDRANT_PORT: int = 6333
+
     @property
     def DATABASE_URL(self) -> str:
         return (
