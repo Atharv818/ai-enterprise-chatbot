@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.logging_config import get_logger
 from app.db.session import get_db
 from app.models.ingested_table import IngestedTable
+from app.services.conversation import get_or_create_conversation, get_recent_history, save_message
 from app.services.embedding import embed_query
 from app.services.nl_to_sql import generate_sql
 from app.services.query_executor import execute_readonly_query
@@ -20,6 +21,11 @@ logger = get_logger(__name__)
 
 @router.post("", response_model=AskResponse)
 def ask(request: AskRequest, db: Session = Depends(get_db)):
+    conversation = get_or_create_conversation(db, request.conversation_id)
+    history = get_recent_history(db, conversation.id)
+
+    save_message(db, conversation.id, "user", request.question)
+
     has_tables = db.query(IngestedTable).first() is not None
     has_documents = _has_indexed_documents()
 
@@ -28,20 +34,24 @@ def ask(request: AskRequest, db: Session = Depends(get_db)):
     elif has_documents and not has_tables:
         route = "document"
     elif has_tables and has_documents:
-        route = classify_question(request.question)
+        from app.services.conversation import get_last_route
+        previous_route = get_last_route(db, conversation.id)
+        route = classify_question(request.question, previous_route=previous_route)
     else:
-        return AskResponse(
-            question=request.question,
-            route="none",
-            answer="No data has been uploaded yet. Please upload a document or spreadsheet first.",
-        )
+        answer = "No data has been uploaded yet. Please upload a document or spreadsheet first."
+        save_message(db, conversation.id, "assistant", answer, route="none")
+        return AskResponse(question=request.question, route="none", answer=answer, conversation_id=conversation.id)
 
-    logger.info(f"ask_routed question={request.question!r} route={route}")
+    logger.info(f"ask_routed question={request.question!r} route={route} conversation_id={conversation.id}")
 
     if route == "sql":
-        return _handle_sql(request.question, db)
+        result = _handle_sql(request.question, db)
     else:
-        return _handle_document(request.question)
+        result = _handle_document(request.question, history)
+
+    save_message(db, conversation.id, "assistant", result.answer, route=result.route)
+    result.conversation_id = conversation.id
+    return result
 
 
 def _has_indexed_documents() -> bool:
@@ -60,7 +70,7 @@ def _handle_sql(question: str, db: Session) -> AskResponse:
     sql = generate_sql(question, schema_context)
 
     if "UNSUPPORTED_QUERY" in sql or not is_safe_select(sql):
-        return AskResponse(question=question, route="sql", answer="I couldn't answer that using the available data.")
+        return AskResponse(question=question, route="sql", answer="I couldn't answer that using the available data.", conversation_id="")
 
     try:
         rows, total_count = execute_readonly_query(sql)
@@ -70,15 +80,16 @@ def _handle_sql(question: str, db: Session) -> AskResponse:
             answer=f"Found {total_count} result(s).",
             data=rows,
             generated_sql=sql,
+            conversation_id="",
         )
     except Exception as e:  # noqa: BLE001
         logger.error(f"ask_sql_failed sql={sql!r} error={e}")
-        return AskResponse(question=question, route="sql", answer="Query execution failed. Please rephrase your question.")
+        return AskResponse(question=question, route="sql", answer="Query execution failed. Please rephrase your question.", conversation_id="")
 
 
-def _handle_document(question: str) -> AskResponse:
+def _handle_document(question: str, history: list[dict]) -> AskResponse:
     query_embedding = embed_query(question)
     results = search_chunks(query_embedding=query_embedding, top_k=5)
-    answer = generate_answer(question, results)
-    return AskResponse(question=question, route="document", answer=answer, sources=results)
+    answer = generate_answer(question, results, history=history)
+    return AskResponse(question=question, route="document", answer=answer, sources=results, conversation_id="")
 

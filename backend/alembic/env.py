@@ -7,6 +7,7 @@ from app.core.config import settings
 from app.db.session import Base
 from app.models import document  # noqa: F401 - registers the model with Base.metadata
 import app.models.ingested_table
+import app.models.conversation
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)

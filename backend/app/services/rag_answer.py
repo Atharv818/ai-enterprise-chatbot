@@ -20,7 +20,7 @@ Rules:
 """
 
 
-def generate_answer(question: str, chunks: list[dict]) -> str:
+def generate_answer(question: str, chunks: list[dict], history: list[dict] | None = None) -> str:
     if not chunks:
         return "I couldn't find any relevant information in the uploaded documents to answer that question."
 
@@ -33,16 +33,17 @@ Question: {question}
 
 Answer the question using only the information above."""
 
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    if history:
+        messages.extend(history)
+    messages.append({"role": "user", "content": user_prompt})
+
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_prompt},
-        ],
+        messages=messages,
         temperature=0.2,
     )
 
     answer = response.choices[0].message.content.strip()
     logger.info(f"rag_answer_generated question={question!r} chunks_used={len(chunks)}")
     return answer
-
