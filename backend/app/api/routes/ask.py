@@ -14,20 +14,21 @@ from app.services.schema_context import build_schema_context
 from app.services.sql_safety import is_safe_select
 from app.services.vector_store import search_chunks
 from app.schemas.ask import AskRequest, AskResponse
+from app.core.tenant import get_tenant_id
 
 router = APIRouter(prefix="/ask", tags=["ask"])
 logger = get_logger(__name__)
 
 
 @router.post("", response_model=AskResponse)
-def ask(request: AskRequest, db: Session = Depends(get_db)):
-    conversation = get_or_create_conversation(db, request.conversation_id)
+def ask(request: AskRequest, db: Session = Depends(get_db), tenant_id: str = Depends(get_tenant_id)):
+    conversation = get_or_create_conversation(db, request.conversation_id, tenant_id)
     history = get_recent_history(db, conversation.id)
 
     save_message(db, conversation.id, "user", request.question)
 
-    has_tables = db.query(IngestedTable).first() is not None
-    has_documents = _has_indexed_documents()
+    has_tables = db.query(IngestedTable).filter(IngestedTable.tenant_id == tenant_id).first() is not None
+    has_documents = _has_indexed_documents(tenant_id)
 
     if has_tables and not has_documents:
         route = "sql"
@@ -47,22 +48,27 @@ def ask(request: AskRequest, db: Session = Depends(get_db)):
     if route == "sql":
         result = _handle_sql(request.question, db)
     else:
-        result = _handle_document(request.question, history)
+        result = _handle_document(request.question, history, tenant_id)
 
     save_message(db, conversation.id, "assistant", result.answer, route=result.route)
     result.conversation_id = conversation.id
     return result
 
 
-def _has_indexed_documents() -> bool:
+def _has_indexed_documents(tenant_id: str) -> bool:
     from app.db.qdrant_client import qdrant
     from app.services.vector_store import COLLECTION_NAME
+    from qdrant_client.models import Filter, FieldCondition, MatchValue
 
     existing = [c.name for c in qdrant.get_collections().collections]
     if COLLECTION_NAME not in existing:
         return False
-    info = qdrant.get_collection(COLLECTION_NAME)
-    return info.points_count > 0
+
+    count_result = qdrant.count(
+        collection_name=COLLECTION_NAME,
+        count_filter=Filter(must=[FieldCondition(key="tenant_id", match=MatchValue(value=tenant_id))]),
+    )
+    return count_result.count > 0
 
 
 def _handle_sql(question: str, db: Session) -> AskResponse:
@@ -87,9 +93,8 @@ def _handle_sql(question: str, db: Session) -> AskResponse:
         return AskResponse(question=question, route="sql", answer="Query execution failed. Please rephrase your question.", conversation_id="")
 
 
-def _handle_document(question: str, history: list[dict]) -> AskResponse:
+def _handle_document(question: str, history: list[dict], tenant_id: str) -> AskResponse:
     query_embedding = embed_query(question)
-    results = search_chunks(query_embedding=query_embedding, top_k=5)
+    results = search_chunks(query_embedding=query_embedding, tenant_id=tenant_id, top_k=5)
     answer = generate_answer(question, results, history=history)
     return AskResponse(question=question, route="document", answer=answer, sources=results, conversation_id="")
-

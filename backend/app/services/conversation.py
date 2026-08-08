@@ -5,17 +5,16 @@ from app.models.conversation import Conversation, Message
 MAX_HISTORY_MESSAGES = 6  # last 3 user/assistant turns
 
 
-def get_or_create_conversation(db: Session, conversation_id: str | None) -> Conversation:
+def get_or_create_conversation(db: Session, conversation_id: str | None, tenant_id: str) -> Conversation:
     if conversation_id:
         existing = db.get(Conversation, conversation_id)
-        if existing:
+        if existing and existing.tenant_id == tenant_id:
             return existing
-    conversation = Conversation()
+    conversation = Conversation(tenant_id=tenant_id)
     db.add(conversation)
     db.commit()
     db.refresh(conversation)
     return conversation
-
 
 def get_recent_history(db: Session, conversation_id: str) -> list[dict]:
     messages = (

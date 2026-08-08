@@ -15,6 +15,8 @@ from app.services.text_extraction import extract_text
 from app.services.chunking import chunk_text
 from app.services.embedding import embed_chunks
 from app.services.vector_store import store_chunks
+from app.core.tenant import get_tenant_id
+
 
 
 router = APIRouter(prefix="/documents", tags=["documents"])
@@ -30,7 +32,7 @@ _EXTENSION_MAP = {
 
 
 @router.post("/upload", response_model=DocumentResponse)
-def upload_document(file: UploadFile, db: Session = Depends(get_db)):
+def upload_document(file: UploadFile, db: Session = Depends(get_db), tenant_id: str = Depends(get_tenant_id)):
     extension = Path(file.filename).suffix.lower()
 
     if extension not in _EXTENSION_MAP:
@@ -50,6 +52,7 @@ def upload_document(file: UploadFile, db: Session = Depends(get_db)):
 
     document = Document(
         id=document_id,
+        tenant_id=tenant_id,
         filename=file.filename,
         file_type=_EXTENSION_MAP[extension],
         storage_path=str(destination),
@@ -77,7 +80,7 @@ def upload_document(file: UploadFile, db: Session = Depends(get_db)):
             text = extract_text(document.storage_path, document.file_type.value)
             chunks = chunk_text(text)
             embeddings = embed_chunks(chunks)
-            stored_count = store_chunks(document.id, chunks, embeddings)
+            stored_count = store_chunks(document.id, tenant_id, chunks, embeddings)
             logger.info(f"document_indexed id={document.id} chunks={stored_count}")
             document.status = DocumentStatus.READY
         except Exception as e:  # noqa: BLE001

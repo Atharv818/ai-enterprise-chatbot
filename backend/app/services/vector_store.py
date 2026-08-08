@@ -21,7 +21,7 @@ def ensure_collection_exists() -> None:
         logger.info(f"qdrant_collection_created name={COLLECTION_NAME}")
 
 
-def store_chunks(document_id: str, chunks: list[str], embeddings: list[list[float]]) -> int:
+def store_chunks(document_id: str, tenant_id: str, chunks: list[str], embeddings: list[list[float]]) -> int:
     ensure_collection_exists()
 
     points = [
@@ -30,6 +30,7 @@ def store_chunks(document_id: str, chunks: list[str], embeddings: list[list[floa
             vector=embedding,
             payload={
                 "document_id": document_id,
+                "tenant_id": tenant_id,
                 "chunk_index": i,
                 "text": chunk,
             },
@@ -41,21 +42,17 @@ def store_chunks(document_id: str, chunks: list[str], embeddings: list[list[floa
     return len(points)
 
 
-def search_chunks(query_embedding: list[float], top_k: int = 5, document_id: str | None = None):
-    """
-    Searches Qdrant for the most semantically similar chunks to the query embedding.
-    Optionally restricts the search to a single document.
-    """
+def search_chunks(query_embedding: list[float], tenant_id: str, top_k: int = 5, document_id: str | None = None):
     existing = [c.name for c in qdrant.get_collections().collections]
     if COLLECTION_NAME not in existing:
         return []
 
-    query_filter = None
+    from qdrant_client.models import Filter, FieldCondition, MatchValue
+    must_conditions = [FieldCondition(key="tenant_id", match=MatchValue(value=tenant_id))]
     if document_id:
-        from qdrant_client.models import Filter, FieldCondition, MatchValue
-        query_filter = Filter(
-            must=[FieldCondition(key="document_id", match=MatchValue(value=document_id))]
-        )
+        must_conditions.append(FieldCondition(key="document_id", match=MatchValue(value=document_id)))
+
+    query_filter = Filter(must=must_conditions)
 
     results = qdrant.query_points(
         collection_name=COLLECTION_NAME,
@@ -74,4 +71,3 @@ def search_chunks(query_embedding: list[float], top_k: int = 5, document_id: str
         }
         for point in results.points
     ]
-

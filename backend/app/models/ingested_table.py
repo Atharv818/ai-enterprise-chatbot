@@ -20,3 +20,5 @@ class IngestedTable(Base):
     column_schema: Mapped[str] = mapped_column(Text, nullable=False)  # JSON: {column: data_type}
     row_count: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False)
+    

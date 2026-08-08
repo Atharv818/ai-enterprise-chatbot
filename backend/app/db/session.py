@@ -12,6 +12,7 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 class Base(DeclarativeBase):
     pass
 
+from app.models import document, ingested_table, conversation, tenant
 
 def get_db() -> Generator[Session, None, None]:
     db = SessionLocal()
