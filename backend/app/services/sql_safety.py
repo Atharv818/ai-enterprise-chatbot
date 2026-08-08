@@ -26,3 +26,13 @@ def is_safe_select(sql: str) -> bool:
             return False
 
     return True
+
+def references_only_tenant_tables(sql: str, allowed_table_names: list[str]) -> bool:
+    """
+    Ensures the SQL only references table names this tenant actually owns.
+    A crude but effective check: every doc_{uuid}-style table name mentioned
+    in the SQL must be in the tenant's allowed list.
+    """
+    import re
+    mentioned_doc_tables = re.findall(r'\bdoc_[a-f0-9_]{20,}\b', sql.lower())
+    return all(table in allowed_table_names for table in mentioned_doc_tables)

@@ -5,12 +5,12 @@ from sqlalchemy.orm import Session
 from app.models.ingested_table import IngestedTable
 
 
-def build_schema_context(db: Session) -> str:
+def build_schema_context(db: Session, tenant_id: str) -> str:
     """
     Builds a plain-text description of every ingested table and its columns,
-    for the AI to use when generating SQL.
+    scoped to a single tenant, for the AI to use when generating SQL.
     """
-    tables = db.query(IngestedTable).all()
+    tables = db.query(IngestedTable).filter(IngestedTable.tenant_id == tenant_id).all()
 
     if not tables:
         return "No tables are currently available."

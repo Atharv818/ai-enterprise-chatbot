@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from app.services.sql_safety import is_safe_select, references_only_tenant_tables
 from app.core.logging_config import get_logger
 from app.db.session import get_db
 from app.models.ingested_table import IngestedTable
@@ -46,7 +47,7 @@ def ask(request: AskRequest, db: Session = Depends(get_db), tenant_id: str = Dep
     logger.info(f"ask_routed question={request.question!r} route={route} conversation_id={conversation.id}")
 
     if route == "sql":
-        result = _handle_sql(request.question, db)
+        result = _handle_sql(request.question, db, tenant_id)
     else:
         result = _handle_document(request.question, history, tenant_id)
 
@@ -71,22 +72,25 @@ def _has_indexed_documents(tenant_id: str) -> bool:
     return count_result.count > 0
 
 
-def _handle_sql(question: str, db: Session) -> AskResponse:
-    schema_context = build_schema_context(db)
+def _handle_sql(question: str, db: Session, tenant_id: str) -> AskResponse:
+    tenant_tables = db.query(IngestedTable).filter(IngestedTable.tenant_id == tenant_id).all()
+    allowed_table_names = [t.table_name for t in tenant_tables]
+
+    schema_context = build_schema_context(db, tenant_id)
     sql = generate_sql(question, schema_context)
 
     if "UNSUPPORTED_QUERY" in sql or not is_safe_select(sql):
         return AskResponse(question=question, route="sql", answer="I couldn't answer that using the available data.", conversation_id="")
 
+    if not references_only_tenant_tables(sql, allowed_table_names):
+        logger.error(f"cross_tenant_sql_blocked tenant_id={tenant_id} sql={sql!r}")
+        return AskResponse(question=question, route="sql", answer="I couldn't answer that using the available data.", conversation_id="")
+
     try:
         rows, total_count = execute_readonly_query(sql)
         return AskResponse(
-            question=question,
-            route="sql",
-            answer=f"Found {total_count} result(s).",
-            data=rows,
-            generated_sql=sql,
-            conversation_id="",
+            question=question, route="sql", answer=f"Found {total_count} result(s).",
+            data=rows, generated_sql=sql, conversation_id="",
         )
     except Exception as e:  # noqa: BLE001
         logger.error(f"ask_sql_failed sql={sql!r} error={e}")
