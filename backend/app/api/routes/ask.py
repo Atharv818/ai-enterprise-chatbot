@@ -15,14 +15,14 @@ from app.services.schema_context import build_schema_context
 from app.services.sql_safety import is_safe_select
 from app.services.vector_store import search_chunks
 from app.schemas.ask import AskRequest, AskResponse
-from app.core.tenant import get_tenant_id
+from app.core.auth_dependency import get_current_tenant_id
 
 router = APIRouter(prefix="/ask", tags=["ask"])
 logger = get_logger(__name__)
 
 
 @router.post("", response_model=AskResponse)
-def ask(request: AskRequest, db: Session = Depends(get_db), tenant_id: str = Depends(get_tenant_id)):
+def ask(request: AskRequest, db: Session = Depends(get_db), tenant_id: str = Depends(get_current_tenant_id)):
     conversation = get_or_create_conversation(db, request.conversation_id, tenant_id)
     history = get_recent_history(db, conversation.id)
 

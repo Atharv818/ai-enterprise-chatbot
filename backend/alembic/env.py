@@ -9,6 +9,7 @@ from app.models import document  # noqa: F401 - registers the model with Base.me
 import app.models.ingested_table
 import app.models.conversation
 import app.models.tenant
+import app.models.user
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)

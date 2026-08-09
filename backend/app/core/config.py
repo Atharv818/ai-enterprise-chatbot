@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     GROQ_API_KEY: str
     QDRANT_HOST: str = "qdrant"
     QDRANT_PORT: int = 6333
+    JWT_SECRET_KEY: str
 
     @property
     def DATABASE_URL(self) -> str:

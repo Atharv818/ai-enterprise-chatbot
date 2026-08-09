@@ -8,7 +8,7 @@ from app.api.routes import documents, query, search
 from app.api.routes import ask, documents, query, search
 from app.api.routes import ask, chat, documents, query, search
 from app.api.routes import ask, conversations, documents, query, search
-from app.api.routes import ask, conversations, documents, query, search, tenants
+from app.api.routes import ask, auth, conversations, documents, query, search, tenants, chat
 
 configure_logging()
 logger = get_logger(__name__)
@@ -31,6 +31,7 @@ app.include_router(ask.router)
 app.include_router(chat.router)
 app.include_router(conversations.router)
 app.include_router(tenants.router)
+app.include_router(auth.router)
 
 
 @app.get("/health")

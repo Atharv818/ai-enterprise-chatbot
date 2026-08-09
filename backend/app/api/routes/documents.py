@@ -15,8 +15,7 @@ from app.services.text_extraction import extract_text
 from app.services.chunking import chunk_text
 from app.services.embedding import embed_chunks
 from app.services.vector_store import store_chunks
-from app.core.tenant import get_tenant_id
-
+from app.core.auth_dependency import get_current_tenant_id
 
 
 router = APIRouter(prefix="/documents", tags=["documents"])
@@ -32,7 +31,7 @@ _EXTENSION_MAP = {
 
 
 @router.post("/upload", response_model=DocumentResponse)
-def upload_document(file: UploadFile, db: Session = Depends(get_db), tenant_id: str = Depends(get_tenant_id)):
+def upload_document(file: UploadFile, db: Session = Depends(get_db), tenant_id: str = Depends(get_current_tenant_id)):
     extension = Path(file.filename).suffix.lower()
 
     if extension not in _EXTENSION_MAP:
