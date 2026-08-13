@@ -70,7 +70,7 @@ def upload_document(file: UploadFile, db: Session = Depends(get_db), tenant_id: 
     if document.file_type in (DocumentType.XLSX, DocumentType.CSV):
         document.status = DocumentStatus.PROCESSING
         db.commit()
-        process_structured_file(document, db)
+        process_structured_file(document, db, tenant_id)
         db.refresh(document)
     elif document.file_type in (DocumentType.PDF, DocumentType.DOCX, DocumentType.TXT):
         document.status = DocumentStatus.PROCESSING

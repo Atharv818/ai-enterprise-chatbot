@@ -23,7 +23,7 @@ def _sanitize_identifier(raw: str) -> str:
     return cleaned
 
 
-def process_structured_file(document: Document, db: Session) -> None:
+def process_structured_file(document: Document, db: Session, tenant_id: str) -> None:
     """
     Reads an uploaded xlsx/csv file, creates a dedicated SQL table for it,
     and inserts every row. Updates the document's status to READY or FAILED.
@@ -41,6 +41,7 @@ def process_structured_file(document: Document, db: Session) -> None:
 
         column_schema = {col: str(dtype) for col, dtype in df.dtypes.items()}
         ingested = IngestedTable(
+            tenant_id=tenant_id,
             document_id=document.id,
             table_name=table_name,
             column_schema=json.dumps(column_schema),
