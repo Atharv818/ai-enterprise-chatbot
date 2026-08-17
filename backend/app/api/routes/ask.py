@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.services.sql_safety import is_safe_select, references_only_tenant_tables
 from app.core.logging_config import get_logger
+from app.core.rate_limit import limiter
 from app.db.session import get_db
 from app.models.ingested_table import IngestedTable
 from app.services.conversation import get_or_create_conversation, get_recent_history, save_message
@@ -12,7 +13,6 @@ from app.services.query_executor import execute_readonly_query
 from app.services.query_router import classify_question
 from app.services.rag_answer import generate_answer
 from app.services.schema_context import build_schema_context
-from app.services.sql_safety import is_safe_select
 from app.services.vector_store import search_chunks
 from app.schemas.ask import AskRequest, AskResponse
 from app.core.auth_dependency import get_current_tenant_id
@@ -22,11 +22,12 @@ logger = get_logger(__name__)
 
 
 @router.post("", response_model=AskResponse)
-def ask(request: AskRequest, db: Session = Depends(get_db), tenant_id: str = Depends(get_current_tenant_id)):
-    conversation = get_or_create_conversation(db, request.conversation_id, tenant_id)
+@limiter.limit("10/minute")
+def ask(request: Request, body: AskRequest, db: Session = Depends(get_db), tenant_id: str = Depends(get_current_tenant_id)):
+    conversation = get_or_create_conversation(db, body.conversation_id, tenant_id)
     history = get_recent_history(db, conversation.id)
 
-    save_message(db, conversation.id, "user", request.question)
+    save_message(db, conversation.id, "user", body.question)
 
     has_tables = db.query(IngestedTable).filter(IngestedTable.tenant_id == tenant_id).first() is not None
     has_documents = _has_indexed_documents(tenant_id)
@@ -38,18 +39,18 @@ def ask(request: AskRequest, db: Session = Depends(get_db), tenant_id: str = Dep
     elif has_tables and has_documents:
         from app.services.conversation import get_last_route
         previous_route = get_last_route(db, conversation.id)
-        route = classify_question(request.question, previous_route=previous_route)
+        route = classify_question(body.question, previous_route=previous_route)
     else:
         answer = "No data has been uploaded yet. Please upload a document or spreadsheet first."
         save_message(db, conversation.id, "assistant", answer, route="none")
-        return AskResponse(question=request.question, route="none", answer=answer, conversation_id=conversation.id)
+        return AskResponse(question=body.question, route="none", answer=answer, conversation_id=conversation.id)
 
-    logger.info(f"ask_routed question={request.question!r} route={route} conversation_id={conversation.id}")
+    logger.info(f"ask_routed question={body.question!r} route={route} conversation_id={conversation.id}")
 
     if route == "sql":
-        result = _handle_sql(request.question, db, tenant_id)
+        result = _handle_sql(body.question, db, tenant_id)
     else:
-        result = _handle_document(request.question, history, tenant_id)
+        result = _handle_document(body.question, history, tenant_id)
 
     save_message(db, conversation.id, "assistant", result.answer, route=result.route)
     result.conversation_id = conversation.id

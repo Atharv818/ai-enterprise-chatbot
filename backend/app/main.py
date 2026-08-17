@@ -3,6 +3,10 @@ from app.core.config import settings
 from app.core.logging_config import configure_logging, get_logger
 from app.db.qdrant_client import qdrant
 from app.api.routes import ask, auth, chat, conversations, documents, query, search
+from app.core.error_handlers import unhandled_exception_handler
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from app.core.rate_limit import limiter
 
 configure_logging()
 logger = get_logger(__name__)
@@ -12,6 +16,9 @@ app = FastAPI(
     version=settings.APP_VERSION,
 )
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(Exception, unhandled_exception_handler)
 
 @app.on_event("startup")
 def on_startup():
