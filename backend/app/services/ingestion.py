@@ -8,6 +8,7 @@ from app.core.logging_config import get_logger
 from app.db.session import engine
 from app.models.document import Document, DocumentStatus
 from app.models.ingested_table import IngestedTable
+from app.core.tenant_scoped import create_tenant_scoped
 
 logger = get_logger(__name__)
 
@@ -40,8 +41,9 @@ def process_structured_file(document: Document, db: Session, tenant_id: str) -> 
         df.to_sql(table_name, con=engine, if_exists="replace", index=False)
 
         column_schema = {col: str(dtype) for col, dtype in df.dtypes.items()}
-        ingested = IngestedTable(
-            tenant_id=tenant_id,
+        ingested = create_tenant_scoped(
+            IngestedTable,
+            tenant_id,
             document_id=document.id,
             table_name=table_name,
             column_schema=json.dumps(column_schema),

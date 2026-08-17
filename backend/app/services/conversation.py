@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.models.conversation import Conversation, Message
+from app.core.tenant_scoped import create_tenant_scoped
 
 MAX_HISTORY_MESSAGES = 6  # last 3 user/assistant turns
 
@@ -10,7 +11,7 @@ def get_or_create_conversation(db: Session, conversation_id: str | None, tenant_
         existing = db.get(Conversation, conversation_id)
         if existing and existing.tenant_id == tenant_id:
             return existing
-    conversation = Conversation(tenant_id=tenant_id)
+    conversation = create_tenant_scoped(Conversation, tenant_id)
     db.add(conversation)
     db.commit()
     db.refresh(conversation)

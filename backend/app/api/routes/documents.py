@@ -16,6 +16,7 @@ from app.services.chunking import chunk_text
 from app.services.embedding import embed_chunks
 from app.services.vector_store import store_chunks
 from app.core.auth_dependency import get_current_tenant_id
+from app.core.tenant_scoped import create_tenant_scoped
 
 
 router = APIRouter(prefix="/documents", tags=["documents"])
@@ -49,18 +50,15 @@ def upload_document(file: UploadFile, db: Session = Depends(get_db), tenant_id: 
     with destination.open("wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    document = Document(
+    document = create_tenant_scoped(
+        Document,
+        tenant_id,
         id=document_id,
-        tenant_id=tenant_id,
         filename=file.filename,
         file_type=_EXTENSION_MAP[extension],
         storage_path=str(destination),
         status=DocumentStatus.PENDING,
     )
-    db.add(document)
-    db.commit()
-    db.refresh(document)
-
     db.add(document)
     db.commit()
     db.refresh(document)
