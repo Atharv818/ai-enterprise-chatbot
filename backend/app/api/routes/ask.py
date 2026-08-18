@@ -16,6 +16,7 @@ from app.services.schema_context import build_schema_context
 from app.services.vector_store import search_chunks
 from app.schemas.ask import AskRequest, AskResponse
 from app.core.auth_dependency import get_current_tenant_id
+from app.services.query_cache import store_query
 
 router = APIRouter(prefix="/ask", tags=["ask"])
 logger = get_logger(__name__)
@@ -89,9 +90,10 @@ def _handle_sql(question: str, db: Session, tenant_id: str) -> AskResponse:
 
     try:
         rows, total_count = execute_readonly_query(sql)
+        query_id = store_query(sql)
         return AskResponse(
             question=question, route="sql", answer=f"Found {total_count} result(s).",
-            data=rows, generated_sql=sql, conversation_id="",
+            data=rows, generated_sql=sql, conversation_id="", query_id=query_id,
         )
     except Exception as e:  # noqa: BLE001
         logger.error(f"ask_sql_failed sql={sql!r} error={e}")

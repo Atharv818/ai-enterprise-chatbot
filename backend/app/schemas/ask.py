@@ -16,5 +16,5 @@ class AskResponse(BaseModel):
     data: list[dict[str, Any]] | None = None
     sources: list[dict[str, Any]] | None = None
     generated_sql: str | None = None
-    
+    query_id: str | None = None
     
