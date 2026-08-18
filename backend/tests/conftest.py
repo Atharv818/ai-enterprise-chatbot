@@ -2,6 +2,7 @@ import os
 os.environ["POSTGRES_HOST"] = "localhost"
 os.environ["POSTGRES_PORT"] = "5433"
 os.environ["POSTGRES_DB"] = "chatbot_test"
+os.environ["QDRANT_HOST"] = "localhost"
 
 import pytest
 from fastapi.testclient import TestClient
@@ -39,4 +40,3 @@ def client(db_session):
     app.dependency_overrides[get_db] = override_get_db
     yield TestClient(app)
     app.dependency_overrides.clear()
-    
