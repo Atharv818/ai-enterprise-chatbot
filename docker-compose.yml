@@ -33,6 +33,17 @@ services:
       retries: 5
     networks:
       - chatbot-net
+      
+  postgres_test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: chatbot_test
+      POSTGRES_USER: chatbot_app
+      POSTGRES_PASSWORD: changeme
+    ports:
+      - "5433:5432"
+    networks:
+      - chatbot-net    
 
   qdrant:
     image: qdrant/qdrant:latest
