@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import AppLayout from './components/AppLayout'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth()
@@ -10,9 +11,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function Home() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <h1 className="text-2xl">You're logged in. Chat UI comes next.</h1>
-    </div>
+    <AppLayout>
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-gray-400">Chat UI comes next.</p>
+      </div>
+    </AppLayout>
   )
 }
 
