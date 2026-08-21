@@ -49,7 +49,7 @@ def ask(request: Request, body: AskRequest, db: Session = Depends(get_db), tenan
     logger.info(f"ask_routed question={body.question!r} route={route} conversation_id={conversation.id}")
 
     if route == "sql":
-        result = _handle_sql(body.question, db, tenant_id)
+        result = _handle_sql(body.question, db, tenant_id, history)
     else:
         result = _handle_document(body.question, history, tenant_id)
 
@@ -74,12 +74,12 @@ def _has_indexed_documents(tenant_id: str) -> bool:
     return count_result.count > 0
 
 
-def _handle_sql(question: str, db: Session, tenant_id: str) -> AskResponse:
+def _handle_sql(question: str, db: Session, tenant_id: str, history: list[dict]) -> AskResponse:
     tenant_tables = db.query(IngestedTable).filter(IngestedTable.tenant_id == tenant_id).all()
     allowed_table_names = [t.table_name for t in tenant_tables]
 
     schema_context = build_schema_context(db, tenant_id)
-    sql = generate_sql(question, schema_context)
+    sql = generate_sql(question, schema_context, history)
 
     if "UNSUPPORTED_QUERY" in sql or not is_safe_select(sql):
         return AskResponse(question=question, route="sql", answer="I couldn't answer that using the available data.", conversation_id="")

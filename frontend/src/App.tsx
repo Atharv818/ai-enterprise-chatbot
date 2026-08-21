@@ -5,7 +5,7 @@ import Register from './pages/Register'
 import { useState } from 'react'
 import AppLayout from './components/AppLayout'
 import DocumentUpload from './components/DocumentUpload'
-
+import Chat from './components/Chat'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth()
@@ -13,17 +13,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function Home() {
-  const [uploadCount, setUploadCount] = useState(0)
+  const [, setUploadCount] = useState(0)
 
   return (
     <AppLayout>
-      <div className="flex-1 flex flex-col items-center justify-center gap-4">
-        <p className="text-gray-400">Chat UI comes next.</p>
+      <div className="border-b border-gray-200 px-6 py-3">
         <DocumentUpload onUploadComplete={() => setUploadCount((c) => c + 1)} />
-        {uploadCount > 0 && (
-          <p className="text-sm text-gray-500">{uploadCount} document(s) uploaded this session.</p>
-        )}
       </div>
+      <Chat />
     </AppLayout>
   )
 }
