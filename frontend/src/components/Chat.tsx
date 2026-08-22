@@ -41,7 +41,7 @@ export default function Chat() {
       <div className="flex-1 overflow-y-auto min-h-0">
         <div className="max-w-3xl w-full mx-auto px-6 py-6 space-y-4">
           {messages.length === 0 && (
-            <p className="text-gray-400 text-center mt-20">
+            <p className="text-warm-gray text-center mt-20">
               Ask a question about your uploaded data.
             </p>
           )}
@@ -54,8 +54,8 @@ export default function Chat() {
               <div
                 className={`max-w-[75%] rounded-xl px-4 py-2 text-sm ${
                   msg.role === 'user'
-                    ? 'bg-gray-900 text-white'
-                    : 'bg-white border border-gray-200'
+                    ? 'bg-peach text-warm-black'
+                    : 'bg-white border border-cream-dark'
                 }`}
               >
                 <p>{msg.content}</p>
@@ -114,7 +114,7 @@ export default function Chat() {
 
       <form
         onSubmit={handleSend}
-        className="flex gap-2 border border-gray-200 rounded-xl p-2 bg-white max-w-3xl w-full mx-auto"
+        className="flex gap-2 border border-cream-dark rounded-xl p-2 bg-white max-w-3xl w-full mx-auto"
       >
         <input
           type="text"
@@ -126,7 +126,7 @@ export default function Chat() {
         <button
           type="submit"
           disabled={loading}
-          className="bg-gray-900 text-white text-sm rounded-lg px-4 py-1.5 disabled:opacity-50"
+          className="bg-terracotta text-white text-sm rounded-lg px-4 py-1.5 hover:bg-terracotta-dark disabled:opacity-50"
         >
           Send
         </button>
