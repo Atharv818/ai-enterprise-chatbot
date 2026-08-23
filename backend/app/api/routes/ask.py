@@ -1,3 +1,4 @@
+import json
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
@@ -53,10 +54,10 @@ def ask(request: Request, body: AskRequest, db: Session = Depends(get_db), tenan
     else:
         result = _handle_document(body.question, history, tenant_id)
 
-    save_message(db, conversation.id, "assistant", result.answer, route=result.route)
+    message_data = json.dumps(result.data) if result.data else None
+    save_message(db, conversation.id, "assistant", result.answer, route=result.route, data=message_data, query_id=result.query_id)
     result.conversation_id = conversation.id
     return result
-
 
 def _has_indexed_documents(tenant_id: str) -> bool:
     from app.db.qdrant_client import qdrant

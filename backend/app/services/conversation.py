@@ -29,8 +29,23 @@ def get_recent_history(db: Session, conversation_id: str) -> list[dict]:
     return [{"role": m.role, "content": m.content} for m in messages]
 
 
-def save_message(db: Session, conversation_id: str, role: str, content: str, route: str | None = None) -> None:
-    message = Message(conversation_id=conversation_id, role=role, content=content, route=route)
+def save_message(
+    db: Session,
+    conversation_id: str,
+    role: str,
+    content: str,
+    route: str | None = None,
+    data: str | None = None,
+    query_id: str | None = None,
+) -> None:
+    message = Message(
+        conversation_id=conversation_id,
+        role=role,
+        content=content,
+        route=route,
+        data=data,
+        query_id=query_id,
+    )
     db.add(message)
     db.commit()
 

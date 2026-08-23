@@ -8,6 +8,8 @@ class MessageResponse(BaseModel):
     role: str
     content: str
     route: str | None
+    data: str | None
+    query_id: str | None
     created_at: datetime
 
     class Config:
@@ -25,5 +27,4 @@ class ConversationDetail(BaseModel):
     id: str
     created_at: datetime
     messages: list[MessageResponse]
-
     

@@ -27,6 +27,8 @@ class Message(Base):
     role: Mapped[str] = mapped_column(String(20), nullable=False)  # "user" or "assistant"
     content: Mapped[str] = mapped_column(Text, nullable=False)
     route: Mapped[str] = mapped_column(String(20), nullable=True)  # "sql" or "document", for assistant messages
+    data: Mapped[str] = mapped_column(Text, nullable=True)  # JSON-encoded SQL result rows, if any
+    query_id: Mapped[str] = mapped_column(String(36), nullable=True)  # for CSV export on reload
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     

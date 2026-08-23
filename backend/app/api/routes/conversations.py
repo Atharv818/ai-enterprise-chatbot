@@ -21,15 +21,15 @@ def list_conversations(db: Session = Depends(get_db), tenant_id: str = Depends(g
         messages = (
             db.query(Message)
             .filter(Message.conversation_id == conv.id)
-            .order_by(Message.created_at.desc())
+            .order_by(Message.created_at.asc())
             .all()
         )
-        last_message = messages[0].content if messages else None
+        first_user_message = next((m.content for m in messages if m.role == "user"), None)
         summaries.append(
             ConversationSummary(
                 id=conv.id,
                 created_at=conv.created_at,
-                last_message=last_message,
+                last_message=first_user_message,
                 message_count=len(messages),
             )
         )
