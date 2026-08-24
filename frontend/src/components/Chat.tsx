@@ -1,5 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { askQuestion, type AskResponse } from '../api/ask'
+import { getConversation } from '../api/conversations'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import ReactMarkdown from 'react-markdown'
 
 interface ChatMessage {
   role: 'user' | 'assistant'
@@ -7,11 +11,58 @@ interface ChatMessage {
   response?: AskResponse
 }
 
-export default function Chat() {
+interface ChatProps {
+  conversationId?: string
+  onConversationChange: (id: string) => void
+}
+
+export default function Chat({ conversationId, onConversationChange }: ChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [conversationId, setConversationId] = useState<string | undefined>()
+  const [loadingHistory, setLoadingHistory] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const navigate = useNavigate()
+  const { logout } = useAuth()
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, loading])
+
+  useEffect(() => {
+    if (!conversationId) {
+      setMessages([])
+      return
+    }
+    setLoadingHistory(true)
+    getConversation(conversationId)
+      .then((detail) => {
+        setMessages(
+          detail.messages.map((m) => {
+            const parsedData = m.data ? JSON.parse(m.data) : null
+            return {
+              role: m.role as 'user' | 'assistant',
+              content: m.content,
+              response:
+                m.role === 'assistant'
+                  ? ({
+                      question: '',
+                      route: m.route ?? '',
+                      answer: m.content,
+                      conversation_id: conversationId,
+                      data: parsedData,
+                      sources: null,
+                      generated_sql: null,
+                      query_id: m.query_id,
+                    } as AskResponse)
+                  : undefined,
+            }
+          })
+        )
+      })
+      .catch(() => setMessages([]))
+      .finally(() => setLoadingHistory(false))
+  }, [conversationId])
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault()
@@ -24,13 +75,21 @@ export default function Chat() {
 
     try {
       const response = await askQuestion(question, conversationId)
-      setConversationId(response.conversation_id)
+      onConversationChange(response.conversation_id)
       setMessages((prev) => [...prev, { role: 'assistant', content: response.answer, response }])
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: "Something went wrong answering that. Try again." },
-      ])
+    } catch (err) {
+      let message = "Something went wrong answering that. Try again."
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosErr = err as { response?: { status?: number } }
+        if (axiosErr.response?.status === 429) {
+          message = "You're asking questions a bit too fast. Wait a moment and try again."
+        } else if (axiosErr.response?.status === 401) {
+          message = "Your session expired. Redirecting to login..."
+          logout()
+          setTimeout(() => navigate('/login'), 1500)
+        }
+      }
+      setMessages((prev) => [...prev, { role: 'assistant', content: message }])
     } finally {
       setLoading(false)
     }
@@ -40,10 +99,18 @@ export default function Chat() {
     <div className="flex-1 flex flex-col min-h-0">
       <div className="flex-1 overflow-y-auto min-h-0">
         <div className="max-w-3xl w-full mx-auto px-6 py-6 space-y-4">
-          {messages.length === 0 && (
-            <p className="text-warm-gray text-center mt-20">
-              Ask a question about your uploaded data.
-            </p>
+          {loadingHistory && <p className="text-warm-gray text-center mt-20">Loading conversation...</p>}
+
+          {!loadingHistory && messages.length === 0 && (
+            <div className="text-center mt-20">
+              <div className="w-12 h-12 bg-terracotta rounded-xl flex items-center justify-center mx-auto mb-4">
+                <span className="text-white text-lg font-medium">A</span>
+              </div>
+              <h2 className="text-lg font-medium text-warm-black mb-1">Ask anything about your data</h2>
+              <p className="text-warm-gray text-sm">
+                Upload a spreadsheet or document above, then ask a question to get started.
+              </p>
+            </div>
           )}
 
           {messages.map((msg, i) => (
@@ -58,7 +125,9 @@ export default function Chat() {
                     : 'bg-white border border-cream-dark'
                 }`}
               >
-                <p>{msg.content}</p>
+                <div className="prose prose-sm max-w-none">
+                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                </div>
 
                 {msg.response?.data && msg.response.data.length > 0 && (
                   <div className="mt-2 overflow-x-auto">
@@ -108,13 +177,20 @@ export default function Chat() {
             </div>
           ))}
 
-          {loading && <p className="text-sm text-gray-400">Thinking...</p>}
+          {loading && (
+            <div className="flex items-center gap-1.5 text-sm text-warm-gray">
+                <span className="w-1.5 h-1.5 bg-warm-gray rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                <span className="w-1.5 h-1.5 bg-warm-gray rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                <span className="w-1.5 h-1.5 bg-warm-gray rounded-full animate-bounce"></span>
+            </div>
+           )}
+           <div ref={messagesEndRef} />     
         </div>
       </div>
 
       <form
         onSubmit={handleSend}
-        className="flex gap-2 border border-cream-dark rounded-xl p-2 bg-white max-w-3xl w-full mx-auto"
+        className="flex gap-2 border border-cream-dark rounded-xl p-2 bg-white max-w-3xl w-[calc(100%-3rem)] mx-auto mb-6"
       >
         <input
           type="text"

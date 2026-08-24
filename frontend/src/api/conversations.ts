@@ -12,6 +12,8 @@ export interface Message {
   role: string
   content: string
   route: string | null
+  data: string | null
+  query_id: string | null
   created_at: string
 }
 

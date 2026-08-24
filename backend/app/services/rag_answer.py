@@ -10,19 +10,32 @@ client = OpenAI(
     base_url="https://api.groq.com/openai/v1",
 )
 
+REFUSAL_MESSAGE = (
+    "I couldn't find enough information in the uploaded documents "
+    "to answer that."
+)
+
 SYSTEM_PROMPT = """You are a helpful assistant that answers questions using only the provided document excerpts.
 
 Rules:
-- Only use information from the provided excerpts. Do not use outside knowledge.
-- If the excerpts don't contain enough information to answer the question, say so clearly instead of guessing.
+- Only use information from the provided document excerpts.
+- Every factual claim must be directly supported by the excerpts.
+- Never invent names, projects, files, events, dates, numbers, or other details.
+- If the excerpts do not contain enough information, reply exactly:
+  "I couldn't find enough information in the uploaded documents to answer that."
+- Previous user questions are conversation context only. They are never a source of facts.
 - Be concise and direct.
-- Do not mention "excerpts" or "chunks" in your answer — just answer naturally, as if you already knew this information.
+- Do not mention "excerpts" or "chunks" in your answer.
 """
 
 
-def generate_answer(question: str, chunks: list[dict], history: list[dict] | None = None) -> str:
+def generate_answer(
+    question: str,
+    chunks: list[dict],
+    history: list[dict] | None = None,
+) -> str:
     if not chunks:
-        return "I couldn't find any relevant information in the uploaded documents to answer that question."
+        return REFUSAL_MESSAGE
 
     context = "\n\n---\n\n".join(chunk["text"] for chunk in chunks)
 
@@ -31,12 +44,34 @@ def generate_answer(question: str, chunks: list[dict], history: list[dict] | Non
 
 Question: {question}
 
-Answer the question using only the information above."""
+Answer only from the document excerpts above."""
 
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+    ]
+
     if history:
-        messages.extend(history)
-    messages.append({"role": "user", "content": user_prompt})
+        user_questions = [
+            message["content"]
+            for message in history
+            if message["role"] == "user"
+        ]
+
+        if user_questions:
+            messages.append(
+                {
+                    "role": "user",
+                    "content": (
+                        "Previous user questions "
+                        "(context only, never a source of facts):\n"
+                        + "\n".join(user_questions)
+                    ),
+                }
+            )
+
+    messages.append(
+        {"role": "user", "content": user_prompt},
+    )
 
     response = client.chat.completions.create(
         model="openai/gpt-oss-120b",
@@ -45,5 +80,11 @@ Answer the question using only the information above."""
     )
 
     answer = response.choices[0].message.content.strip()
-    logger.info(f"rag_answer_generated question={question!r} chunks_used={len(chunks)}")
+
+    logger.info(
+        "rag_answer_generated question=%r chunks_used=%d",
+        question,
+        len(chunks),
+    )
+
     return answer

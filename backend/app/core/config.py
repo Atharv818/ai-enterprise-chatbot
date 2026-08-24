@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     
     UPLOAD_DIR: str = "storage/uploads"
     MAX_UPLOAD_SIZE_MB: int = 50
+    RAG_MIN_RELEVANCE_SCORE: float = 0.55
 
 
 settings = Settings()

@@ -11,28 +11,50 @@ client = OpenAI(
 )
 
 CLASSIFY_PROMPT = """You classify user questions into one of two categories:
-- "sql" — the question is about structured/tabular data (numbers, counts, comparisons, filtering rows, spreadsheet-style data)
-- "document" — the question is about content written in documents (facts, descriptions, explanations, anything from a PDF/Word/text file)
+- "sql" — the question asks for records, rows, people, values, counts, comparisons, filters, or spreadsheet-style data. For example, requests such as "show all rejected users" or "give me information about employees with a certification status" are SQL questions.
+- "document" — the question is about content written in documents: facts, explanations, policies, or anything from a PDF, Word, or text file.
 
 Respond with ONLY the single word "sql" or "document". No explanation.
 """
 
-# Words that strongly signal a genuine SQL/aggregation intent, even mid-conversation
 _SQL_SIGNAL_WORDS = (
     "how many", "count", "average", "sum", "total", "maximum", "minimum",
-    "highest", "lowest", "compare", "filter", "sort", "greater than", "less than",
+    "highest", "lowest", "compare", "filter", "sort", "greater than",
+    "less than",
+)
+
+_SQL_LIST_WORDS = (
+    "show", "list", "find", "get", "give", "display", "retrieve",
+)
+
+_SQL_RECORD_WORDS = (
+    "user", "users", "employee", "employees", "record", "records",
+    "row", "rows", "customer", "customers", "client", "clients",
+    "applicant", "applicants", "certification", "status",
+    "application", "applications",
 )
 
 
 def classify_question(question: str, previous_route: str | None = None) -> str:
     lowered = question.lower()
-    has_strong_sql_signal = any(word in lowered for word in _SQL_SIGNAL_WORDS)
 
-    # Deterministic short-circuit: if there's conversation history and no strong
-    # signal pointing to the other type, just stay on the same route as before.
-    if previous_route and not has_strong_sql_signal:
-        logger.info(f"question_classified question={question!r} type={previous_route} (inherited, no override signal)")
-        return previous_route
+    has_strong_sql_signal = any(
+        word in lowered for word in _SQL_SIGNAL_WORDS
+    )
+
+    asks_for_records = (
+        any(word in lowered for word in _SQL_LIST_WORDS)
+        and any(word in lowered for word in _SQL_RECORD_WORDS)
+    )
+
+    if has_strong_sql_signal or asks_for_records:
+        logger.info(
+            "question_classified question=%r type=sql "
+            "(structured-data signal) previous_route=%s",
+            question,
+            previous_route,
+        )
+        return "sql"
 
     response = client.chat.completions.create(
         model="openai/gpt-oss-120b",
@@ -42,6 +64,14 @@ def classify_question(question: str, previous_route: str | None = None) -> str:
         ],
         temperature=0,
     )
+
     result = response.choices[0].message.content.strip().lower()
-    logger.info(f"question_classified question={question!r} type={result} previous_route={previous_route}")
+
+    logger.info(
+        "question_classified question=%r type=%s previous_route=%s",
+        question,
+        result,
+        previous_route,
+    )
+
     return result if result in ("sql", "document") else "document"

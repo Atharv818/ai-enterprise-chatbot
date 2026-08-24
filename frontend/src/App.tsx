@@ -1,8 +1,8 @@
+import { useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Login from './pages/Login'
 import Register from './pages/Register'
-import { useState } from 'react'
 import AppLayout from './components/AppLayout'
 import DocumentUpload from './components/DocumentUpload'
 import Chat from './components/Chat'
@@ -13,14 +13,29 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function Home() {
-  const [, setUploadCount] = useState(0)
+  const [conversationId, setConversationId] = useState<string | undefined>()
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  function handleConversationChange(id: string) {
+    setConversationId(id)
+    setRefreshKey((k) => k + 1)
+  }
+
+  function handleNewConversation() {
+    setConversationId(undefined)
+  }
 
   return (
-    <AppLayout>
-      <div className="border-b border-gray-200 px-6 py-3">
-        <DocumentUpload onUploadComplete={() => setUploadCount((c) => c + 1)} />
+    <AppLayout
+      activeConversationId={conversationId}
+      onSelectConversation={setConversationId}
+      onNewConversation={handleNewConversation}
+      refreshKey={refreshKey}
+    >
+      <div className="border-b border-cream-dark px-6 py-3">
+        <DocumentUpload onUploadComplete={() => setRefreshKey((k) => k + 1)} />
       </div>
-      <Chat />
+      <Chat conversationId={conversationId} onConversationChange={handleConversationChange} />
     </AppLayout>
   )
 }
