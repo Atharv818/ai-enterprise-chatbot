@@ -122,7 +122,7 @@ export default function Chat({ conversationId, onConversationChange }: ChatProps
                 className={`max-w-[75%] rounded-xl px-4 py-2 text-sm ${
                   msg.role === 'user'
                     ? 'bg-peach text-warm-black'
-                    : 'bg-white border border-cream-dark'
+                    : 'bg-main-bg border border-card-border'
                 }`}
               >
                 <div className="prose prose-sm max-w-none">
@@ -130,14 +130,14 @@ export default function Chat({ conversationId, onConversationChange }: ChatProps
                 </div>
 
                 {msg.response?.data && msg.response.data.length > 0 && (
-                  <div className="mt-2 overflow-x-auto">
-                    <table className="text-xs border-collapse">
+                  <div className="mt-2 overflow-x-auto rounded-lg border border-card-border">
+                    <table className="text-xs border-collapse w-full">
                       <thead>
-                        <tr>
+                        <tr className="bg-table-header">
                           {Object.keys(msg.response.data[0]).map((key) => (
                             <th
                               key={key}
-                              className="border-b border-gray-200 px-2 py-1 text-left text-gray-500"
+                              className="border-b border-card-border px-3 py-2 text-left font-medium text-warm-black uppercase tracking-wide text-[11px]"
                             >
                               {key}
                             </th>
@@ -147,11 +147,11 @@ export default function Chat({ conversationId, onConversationChange }: ChatProps
 
                       <tbody>
                         {msg.response.data.map((row, ri) => (
-                          <tr key={ri}>
+                          <tr key={ri} className="odd:bg-main-bg even:bg-cream/40">
                             {Object.values(row).map((val, vi) => (
                               <td
                                 key={vi}
-                                className="border-b border-gray-100 px-2 py-1"
+                                className="border-b border-card-border px-3 py-2 text-warm-black"
                               >
                                 {String(val)}
                               </td>
@@ -168,8 +168,22 @@ export default function Chat({ conversationId, onConversationChange }: ChatProps
                   msg.response.data.length >= 10 && (
                     <a
                       href={`/api/query/export/${msg.response.query_id}`}
-                      className="inline-block mt-2 text-xs text-blue-600 underline"
+                      className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-white bg-terracotta rounded-lg px-3 py-1.5 hover:bg-terracotta-dark transition-colors"
                     >
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M12 3v12" />
+                        <path d="M7 10l5 5 5-5" />
+                        <path d="M5 21h14" />
+                      </svg>
                       Download CSV
                     </a>
                   )}
@@ -190,19 +204,19 @@ export default function Chat({ conversationId, onConversationChange }: ChatProps
 
       <form
         onSubmit={handleSend}
-        className="flex gap-2 border border-cream-dark rounded-xl p-2 bg-white max-w-3xl w-[calc(100%-3rem)] mx-auto mb-6"
+        className="flex gap-2 border border-input-border rounded-xl p-2 bg-main-bg max-w-3xl w-[calc(100%-3rem)] mx-auto mb-6 transition-colors focus-within:border-terracotta"
       >
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask a question about your data"
-          className="flex-1 px-2 py-1 text-sm focus:outline-none"
+          className="flex-1 px-2 py-1 text-sm focus:outline-none bg-transparent"
         />
         <button
           type="submit"
           disabled={loading}
-          className="bg-terracotta text-white text-sm rounded-lg px-4 py-1.5 hover:bg-terracotta-dark disabled:opacity-50"
+          className="bg-terracotta text-white text-sm rounded-lg px-4 py-1.5 hover:bg-terracotta-dark disabled:opacity-50 transition-colors"
         >
           Send
         </button>
