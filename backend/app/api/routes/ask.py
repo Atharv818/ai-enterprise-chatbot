@@ -20,6 +20,7 @@ from app.services.rag_answer import generate_answer
 from app.services.schema_context import build_schema_context
 from app.services.sql_safety import is_safe_select,references_only_tenant_tables
 from app.services.vector_store import search_chunks
+from app.services.answer_formatter import format_sql_answer
 
 router = APIRouter(prefix="/ask", tags=["ask"])
 logger = get_logger(__name__)
@@ -46,6 +47,7 @@ _NO_ANSWER_PHRASES = (
     "i couldn't answer that using the available data",
     "query execution failed",
     "no data has been uploaded yet",
+    "i couldn't find any records matching that",
 )
 
 
@@ -314,9 +316,11 @@ def _handle_sql(
     sql = generate_sql(
         question,
         schema_context,
+        allowed_table_names,
+        db,
         history,
     )
-
+    
     if "UNSUPPORTED_QUERY" in sql or not is_safe_select(sql):
         return AskResponse(
             question=question,
@@ -343,10 +347,13 @@ def _handle_sql(
         rows, total_count = execute_readonly_query(sql)
         query_id = store_query(sql)
 
+        columns = list(rows[0].keys()) if rows else []
+        answer = format_sql_answer(question, columns, rows, total_count)
+
         return AskResponse(
             question=question,
             route="sql",
-            answer=f"Found {total_count} result(s).",
+            answer=answer,
             data=rows,
             generated_sql=sql,
             conversation_id="",
@@ -381,7 +388,7 @@ def _handle_document(
     results = search_chunks(
         query_embedding=query_embedding,
         tenant_id=tenant_id,
-        top_k=5,
+        top_k=8,
     )
 
     answer = generate_answer(
