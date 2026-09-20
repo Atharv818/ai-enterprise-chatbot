@@ -1,6 +1,6 @@
 import uuid
 
-from qdrant_client.models import Distance, PointStruct, VectorParams
+from qdrant_client.models import Distance, FieldCondition, Filter, FilterSelector, MatchValue, PointStruct, VectorParams
 
 from app.core.config import settings
 from app.core.logging_config import get_logger
@@ -56,6 +56,30 @@ def store_chunks(
     return len(points)
 
 
+def delete_chunks(document_id: str, tenant_id: str) -> None:
+    """Deletes all stored chunks for a document. Point IDs are random
+    uuid4s (not derived from document_id/chunk_index), so re-running
+    store_chunks() does NOT overwrite prior points — this must be called
+    before re-storing on reprocess, or stale chunks will keep feeding RAG
+    answers alongside the new ones."""
+    existing = [collection.name for collection in qdrant.get_collections().collections]
+    if COLLECTION_NAME not in existing:
+        return
+
+    qdrant.delete(
+        collection_name=COLLECTION_NAME,
+        points_selector=FilterSelector(
+            filter=Filter(
+                must=[
+                    FieldCondition(key="document_id", match=MatchValue(value=document_id)),
+                    FieldCondition(key="tenant_id", match=MatchValue(value=tenant_id)),
+                ]
+            )
+        ),
+    )
+    logger.info("chunks_deleted document_id=%s tenant_id=%s", document_id, tenant_id)
+
+
 def search_chunks(
     query_embedding: list[float],
     tenant_id: str,
@@ -67,8 +91,6 @@ def search_chunks(
 
     if COLLECTION_NAME not in existing:
         return []
-
-    from qdrant_client.models import FieldCondition, Filter, MatchValue
 
     must_conditions = [
         FieldCondition(

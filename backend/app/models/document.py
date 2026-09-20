@@ -1,35 +1,38 @@
 import uuid
 from datetime import datetime
 from enum import Enum as PyEnum
-
-from sqlalchemy import DateTime, Enum, String, Text, ForeignKey
+ 
+from sqlalchemy import DateTime, Enum, Index, String, Text, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
-
+ 
 from app.db.session import Base
-
-
+ 
+ 
 def _uuid() -> str:
     return str(uuid.uuid4())
-
-
+ 
+ 
 class DocumentStatus(str, PyEnum):
     PENDING = "pending"
     PROCESSING = "processing"
     READY = "ready"
     FAILED = "failed"
-
-
+ 
+ 
 class DocumentType(str, PyEnum):
     XLSX = "xlsx"
     CSV = "csv"
     PDF = "pdf"
     DOCX = "docx"
     TXT = "txt"
-
-
+ 
+ 
 class Document(Base):
     __tablename__ = "documents"
-
+    __table_args__ = (
+        Index("ix_documents_tenant_content_hash", "tenant_id", "content_hash"),
+    )
+ 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
     filename: Mapped[str] = mapped_column(String(512), nullable=False)
     file_type: Mapped[DocumentType] = mapped_column(Enum(DocumentType), nullable=False)
@@ -40,3 +43,6 @@ class Document(Base):
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     uploaded_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     tenant_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenants.id"), nullable=False)
+ 
+    content_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    chunk_params: Mapped[str | None] = mapped_column(String(32), nullable=True)
