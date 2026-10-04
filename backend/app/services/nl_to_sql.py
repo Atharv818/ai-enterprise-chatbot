@@ -1,7 +1,8 @@
 from openai import OpenAI
 from sqlalchemy import text
-
+import logging
 from app.core.config import settings
+logger = logging.getLogger(__name__)
 
 client = OpenAI(
     api_key=settings.GROQ_API_KEY,
@@ -85,5 +86,7 @@ Write a single PostgreSQL SELECT query that answers this question."""
         sql = sql.strip("`")
         if sql.lower().startswith("sql"):
             sql = sql[3:].strip()
+
+    logger.info(f"generated_sql: {sql!r} | question={question!r}")
 
     return sql
