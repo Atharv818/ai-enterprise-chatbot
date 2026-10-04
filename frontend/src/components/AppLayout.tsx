@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { listConversations, type ConversationSummary } from '../api/conversations'
+import { APP_NAME, APP_SIDEBAR_SUBTITLE } from '../config/brand'
 
 interface AppLayoutProps {
   children: ReactNode
@@ -33,11 +34,11 @@ export default function AppLayout({
       <aside className="w-56 bg-sidebar-bg border-r border-card-border flex flex-col p-3 overflow-y-auto">
         <div className="flex items-center gap-2 px-1 py-2 mb-4">
           <div className="w-7 h-7 rounded-md bg-terracotta flex items-center justify-center shrink-0">
-            <span className="text-white text-xs font-medium">A</span>
+            <span className="text-white text-xs font-medium">{APP_NAME.charAt(0)}</span>
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-warm-black leading-tight truncate">Enterprise AI</p>
-            <p className="text-[11px] text-warm-gray leading-tight truncate">Ask your company data</p>
+            <p className="text-sm font-medium text-warm-black leading-tight truncate">{APP_NAME}</p>
+            <p className="text-[11px] text-warm-gray leading-tight truncate">{APP_SIDEBAR_SUBTITLE}</p>
           </div>
         </div>
 

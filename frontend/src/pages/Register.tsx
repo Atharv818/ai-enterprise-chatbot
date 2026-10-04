@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { register } from '../api/auth'
 import { useAuth } from '../context/AuthContext'
+import { APP_NAME, APP_TAGLINE } from '../config/brand'
 
 export default function Register() {
   const [email, setEmail] = useState('')
@@ -30,6 +31,11 @@ export default function Register() {
   return (
     <div className="min-h-screen bg-cream flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
+        <div className="mb-8">
+          <p className="text-3xl font-semibold text-terracotta leading-tight">{APP_NAME}</p>
+          <p className="text-sm text-warm-gray mt-1">{APP_TAGLINE}</p>
+        </div>
+
         <h1 className="text-2xl font-semibold text-warm-black mb-1">Create your account</h1>
         <p className="text-warm-gray mb-8">Start asking questions about your data</p>
 
