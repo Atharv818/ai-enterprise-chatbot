@@ -1,22 +1,13 @@
+// frontend/src/pages/Login.tsx
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { login } from '../api/auth'
 import { useAuth } from '../context/AuthContext'
 import { APP_NAME, APP_TAGLINE } from '../config/brand'
+import Logo from '../components/Logo'
+import AuthDecor from '../components/AuthDecor'
 
 const SHOW_GOOGLE = false // flip to true once Google OAuth exists on the backend
-
-function Logo({ size = 28 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" className="text-terracotta">
-      <g stroke="currentColor" strokeWidth="3" strokeLinecap="round">
-        {[0, 30, 60, 90, 120, 150].map((deg) => (
-          <line key={deg} x1="16" y1="3" x2="16" y2="29" transform={`rotate(${deg} 16 16)`} />
-        ))}
-      </g>
-    </svg>
-  )
-}
 
 function GoogleIcon() {
   return (
@@ -34,32 +25,6 @@ function MailIcon() {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
       <rect x="3" y="5" width="18" height="14" rx="2" />
       <path d="m3 7 9 6 9-6" />
-    </svg>
-  )
-}
-
-function Blob() {
-  return (
-    <svg
-      className="pointer-events-none absolute -right-16 -top-10 hidden h-[380px] w-[380px] md:block"
-      viewBox="0 0 400 400"
-      aria-hidden="true"
-    >
-      <path
-        d="M60 40 C150 -10 300 0 360 70 C410 130 380 230 330 280 C290 320 230 330 180 300 C140 280 110 300 80 270 C30 220 -10 100 60 40Z"
-        fill="#D97757"
-      />
-      <g stroke="#F6D9CC" strokeWidth="2" fill="#F6D9CC">
-        <line x1="190" y1="90" x2="260" y2="130" />
-        <line x1="260" y1="130" x2="320" y2="90" />
-        <line x1="260" y1="130" x2="300" y2="200" />
-        <line x1="190" y1="90" x2="150" y2="160" />
-        <circle cx="190" cy="90" r="9" />
-        <circle cx="260" cy="130" r="7" />
-        <circle cx="320" cy="90" r="6" />
-        <circle cx="300" cy="200" r="8" />
-        <circle cx="150" cy="160" r="5" />
-      </g>
     </svg>
   )
 }
@@ -89,26 +54,20 @@ export default function Login() {
   }
 
   const btn =
-    'w-full flex items-center justify-center gap-3 rounded-xl border border-cream-dark bg-white px-4 py-3 text-[15px] font-medium text-warm-black transition hover:bg-cream/60 disabled:opacity-60'
+    'w-full flex items-center justify-center gap-3 rounded-xl border border-[#E1E6D8] bg-white px-4 py-3 text-[15px] font-medium text-warm-black transition hover:bg-[#F7F9F3] disabled:opacity-60'
 
   const input =
-    'w-full rounded-xl border border-cream-dark bg-white px-4 py-3 text-[15px] text-warm-black outline-none transition focus:border-terracotta focus:ring-2 focus:ring-terracotta/20'
+    'w-full rounded-xl border border-[#E1E6D8] bg-white px-4 py-3 text-[15px] text-warm-black outline-none transition focus:border-[#2A9A40] focus:ring-2 focus:ring-[#2A9A40]/20'
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-cream">
-      {/* Top-left brand */}
-      <div className="absolute left-6 top-6 flex items-center gap-2 sm:left-10 sm:top-8">
-        <Logo />
-        <span className="font-serif text-2xl font-medium text-warm-black">{APP_NAME}</span>
-      </div>
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#F5F7F0] via-[#EEF3E6] to-[#E4EDDA]">
+      <AuthDecor />
 
-      <Blob />
-
-      <main className="relative z-10 flex min-h-screen items-center justify-center px-4 py-24">
-        <div className="w-full max-w-[440px] rounded-3xl border border-cream-dark bg-white/60 px-8 py-10 shadow-[0_10px_40px_-12px_rgba(60,50,30,0.15)] sm:px-10">
+      <main className="relative z-10 flex min-h-screen items-center justify-center px-4 py-16">
+        <div className="w-full max-w-[440px] rounded-3xl border border-[#E4E8DC] bg-white/70 px-8 py-10 shadow-[0_10px_40px_-12px_rgba(60,80,40,0.18)] backdrop-blur-sm sm:px-10">
           <div className="mb-8 flex flex-col items-center">
             <div className="flex items-center gap-2">
-              <Logo size={32} />
+              <Logo size={44} />
               <span className="font-serif text-[32px] font-medium text-warm-black">{APP_NAME}</span>
             </div>
             <p className="mt-1 text-sm text-warm-gray">{APP_TAGLINE}</p>
@@ -135,14 +94,14 @@ export default function Login() {
               </button>
 
               <div className="flex items-center gap-4 pt-3">
-                <div className="h-px flex-1 bg-cream-dark" />
+                <div className="h-px flex-1 bg-[#E1E6D8]" />
                 <span className="text-xs text-warm-gray">or</span>
-                <div className="h-px flex-1 bg-cream-dark" />
+                <div className="h-px flex-1 bg-[#E1E6D8]" />
               </div>
 
               <p className="pt-2 text-center text-sm text-warm-gray">
                 Don't have an account?{' '}
-                <Link to="/register" className="font-medium text-terracotta underline">
+                <Link to="/register" className="font-medium text-[#2A9A40] hover:underline">
                   Sign up
                 </Link>
               </p>
@@ -174,7 +133,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-xl bg-terracotta px-4 py-3 text-[15px] font-medium text-white transition hover:bg-terracotta-dark disabled:opacity-50"
+                className="w-full rounded-xl bg-[#2A9A40] px-4 py-3 text-[15px] font-medium text-white transition hover:bg-[#1F7F33] disabled:opacity-50"
               >
                 {loading ? 'Logging in...' : 'Log in'}
               </button>
@@ -191,12 +150,6 @@ export default function Login() {
               </button>
             </form>
           )}
-
-          <p className="mt-8 text-center text-xs leading-relaxed text-warm-gray">
-            By continuing, you agree to {APP_NAME}'s{' '}
-            <a href="#" className="underline hover:text-warm-black">Terms of Service</a> and{' '}
-            <a href="#" className="underline hover:text-warm-black">Privacy Policy</a>.
-          </p>
         </div>
       </main>
     </div>

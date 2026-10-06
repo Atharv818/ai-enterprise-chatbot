@@ -1,9 +1,11 @@
+// frontend/src/components/Chat.tsx
 import { useState, useEffect, useRef } from 'react'
 import { askQuestion, type AskResponse } from '../api/ask'
 import { getConversation } from '../api/conversations'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import ReactMarkdown from 'react-markdown'
+import Logo from './Logo'
 
 interface ChatMessage {
   role: 'user' | 'assistant'
@@ -103,8 +105,8 @@ export default function Chat({ conversationId, onConversationChange }: ChatProps
 
           {!loadingHistory && messages.length === 0 && (
             <div className="text-center mt-20">
-              <div className="w-12 h-12 bg-terracotta rounded-xl flex items-center justify-center mx-auto mb-4">
-                <span className="text-white text-lg font-medium">A</span>
+              <div className="flex justify-center mb-4">
+                <Logo size={64} />
               </div>
               <h2 className="text-lg font-medium text-warm-black mb-1">Ask anything about your data</h2>
               <p className="text-warm-gray text-sm">
@@ -121,11 +123,15 @@ export default function Chat({ conversationId, onConversationChange }: ChatProps
               <div
                 className={`max-w-[75%] rounded-xl px-4 py-2 text-sm ${
                   msg.role === 'user'
-                    ? 'bg-peach text-warm-black'
+                    ? 'bg-[#2A9A40] text-white'
                     : 'bg-main-bg border border-card-border'
                 }`}
               >
-                <div className="prose prose-sm max-w-none">
+                <div
+                  className={`prose prose-sm max-w-none ${
+                    msg.role === 'user' ? 'prose-p:text-white' : ''
+                  }`}
+                >
                   <ReactMarkdown>{msg.content}</ReactMarkdown>
                 </div>
 
@@ -133,7 +139,7 @@ export default function Chat({ conversationId, onConversationChange }: ChatProps
                   <div className="mt-2 overflow-x-auto rounded-lg border border-card-border">
                     <table className="text-xs border-collapse w-full">
                       <thead>
-                        <tr className="bg-table-header">
+                        <tr className="bg-[#E3F2E0]">
                           {Object.keys(msg.response.data[0]).map((key) => (
                             <th
                               key={key}
@@ -168,7 +174,7 @@ export default function Chat({ conversationId, onConversationChange }: ChatProps
                   msg.response.data.length >= 10 && (
                     <a
                       href={`/api/query/export/${msg.response.query_id}`}
-                      className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-white bg-terracotta rounded-lg px-3 py-1.5 hover:bg-terracotta-dark transition-colors"
+                      className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-white bg-[#2A9A40] rounded-lg px-3 py-1.5 hover:bg-[#1F7F33] transition-colors"
                     >
                       <svg
                         width="12"
@@ -198,13 +204,13 @@ export default function Chat({ conversationId, onConversationChange }: ChatProps
                 <span className="w-1.5 h-1.5 bg-warm-gray rounded-full animate-bounce"></span>
             </div>
            )}
-           <div ref={messagesEndRef} />     
+           <div ref={messagesEndRef} />
         </div>
       </div>
 
       <form
         onSubmit={handleSend}
-        className="flex gap-2 border border-input-border rounded-xl p-2 bg-main-bg max-w-3xl w-[calc(100%-3rem)] mx-auto mb-6 transition-colors focus-within:border-terracotta"
+        className="flex gap-2 border border-input-border rounded-xl p-2 bg-main-bg max-w-3xl w-[calc(100%-3rem)] mx-auto mb-6 transition-colors focus-within:border-[#2A9A40]"
       >
         <input
           type="text"
@@ -216,7 +222,7 @@ export default function Chat({ conversationId, onConversationChange }: ChatProps
         <button
           type="submit"
           disabled={loading}
-          className="bg-terracotta text-white text-sm rounded-lg px-4 py-1.5 hover:bg-terracotta-dark disabled:opacity-50 transition-colors"
+          className="bg-[#2A9A40] text-white text-sm rounded-lg px-4 py-1.5 hover:bg-[#1F7F33] disabled:opacity-50 transition-colors"
         >
           Send
         </button>

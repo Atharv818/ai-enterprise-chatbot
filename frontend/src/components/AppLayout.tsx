@@ -1,7 +1,9 @@
+// frontend/src/components/AppLayout.tsx
 import { type ReactNode, useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { listConversations, type ConversationSummary } from '../api/conversations'
 import { APP_NAME, APP_SIDEBAR_SUBTITLE } from '../config/brand'
+import Logo from './Logo'
 
 interface AppLayoutProps {
   children: ReactNode
@@ -30,12 +32,10 @@ export default function AppLayout({
   }, [refreshKey])
 
   return (
-    <div className="h-screen flex bg-sidebar-bg overflow-hidden">
-      <aside className="w-56 bg-sidebar-bg border-r border-card-border flex flex-col p-3 overflow-y-auto">
+    <div className="h-screen flex bg-[#F1F3EA] overflow-hidden">
+      <aside className="w-56 bg-[#F1F3EA] border-r border-[#E1E6D8] flex flex-col p-3 overflow-y-auto">
         <div className="flex items-center gap-2 px-1 py-2 mb-4">
-          <div className="w-7 h-7 rounded-md bg-terracotta flex items-center justify-center shrink-0">
-            <span className="text-white text-xs font-medium">{APP_NAME.charAt(0)}</span>
-          </div>
+          <Logo size={32} />
           <div className="min-w-0">
             <p className="text-sm font-medium text-warm-black leading-tight truncate">{APP_NAME}</p>
             <p className="text-[11px] text-warm-gray leading-tight truncate">{APP_SIDEBAR_SUBTITLE}</p>
@@ -44,7 +44,7 @@ export default function AppLayout({
 
         <button
           onClick={onNewConversation}
-          className="w-full flex items-center gap-2 text-sm rounded-lg border border-terracotta text-terracotta px-3 py-2 mb-4 hover:bg-peach transition-colors"
+          className="w-full flex items-center gap-2 text-sm rounded-lg border border-[#2A9A40] text-[#2A9A40] px-3 py-2 mb-4 hover:bg-[#E3F2E0] transition-colors"
         >
           <span>+</span> New conversation
         </button>
@@ -66,8 +66,8 @@ export default function AppLayout({
                 onClick={() => onSelectConversation(conv.id)}
                 className={`w-full text-left text-xs px-2.5 py-2 rounded-lg truncate mb-0.5 border-l-[3px] transition-colors ${
                   isActive
-                    ? 'bg-peach text-warm-black border-terracotta font-medium'
-                    : 'text-warm-gray hover:bg-cream-dark border-transparent'
+                    ? 'bg-[#E3F2E0] text-warm-black border-[#2A9A40] font-medium'
+                    : 'text-warm-gray hover:bg-[#E8EEDF] border-transparent'
                 }`}
               >
                 {conv.last_message || 'New conversation'}
@@ -78,13 +78,13 @@ export default function AppLayout({
 
         <button
           onClick={logout}
-          className="text-sm text-warm-gray hover:text-warm-black text-left px-2 py-2 border-t border-card-border mt-2"
+          className="text-sm text-warm-gray hover:text-warm-black text-left px-2 py-2 border-t border-[#E1E6D8] mt-2"
         >
           Log out
         </button>
       </aside>
 
-      <main className="flex-1 flex flex-col overflow-hidden min-h-0 bg-main-bg">{children}</main>
+      <main className="flex-1 flex flex-col overflow-hidden min-h-0 bg-[#F7F8F2]">{children}</main>
     </div>
   )
 }
